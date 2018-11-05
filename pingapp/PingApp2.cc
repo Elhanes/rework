@@ -82,7 +82,7 @@ void PingApp2::initialize(int stage)
 //        if (count <= 0 && count != -1)
 //            throw cRuntimeError("Invalid count=%d parameter (should use -1 or a larger than zero value)", count);
         startTime = par("startTime");
-        //startTime=0.01;
+        //startTime=0.01; - elhanes : first try for difference of start time..
         stopTime = par("stopTime");
         if (stopTime >= SIMTIME_ZERO && stopTime < startTime)
             throw cRuntimeError("Invalid startTime/stopTime parameters");
@@ -105,7 +105,7 @@ void PingApp2::initialize(int stage)
 
         // references
         timer = new cMessage("sendPing", PING_FIRST_ADDR);
-EV<<"this is 1";
+		EV<<"this is 1"; // elhanes : for checking message?
 
     }
    else if (stage == INITSTAGE_APPLICATION_LAYER) {
@@ -114,7 +114,7 @@ EV<<"this is 1";
        nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
        if (isEnabled() && isNodeUp())
             startSendingPingRequests();
-       EV<<"this is 2";
+       EV<<"this is 2"; // elhanes : for checking message?
     }
 }
 
@@ -185,13 +185,14 @@ void PingApp2::handleMessage(cMessage *msg)
         }
 
         // then schedule next one if needed
-      //  scheduleNextPingRequest(simTime(), msg->getKind() == PING_CHANGE_ADDR);
+		// scheduleNextPingRequest(simTime(), msg->getKind() == PING_CHANGE_ADDR);
+		// elhanes : this line is not remark in PingApp.cc, I will check with this..
 
     }
     else {
         // process ping response
         processPingResponse(check_and_cast<PingPayload *>(msg));
-        finish();
+        finish(); // elhanes : if the ping response, this function will be finish.. I will check this one too.
     }
 }
 
@@ -224,7 +225,7 @@ bool PingApp2::handleOperationStage(LifecycleOperation *operation, int stage, ID
 
 void PingApp2::startSendingPingRequests()
 {
-    EV<<"this is 3";
+    EV<<"this is 3"; // elhanes : for debugging..
     ASSERT(!timer->isScheduled());
     pid = getSimulation()->getUniqueNumber();
     lastStart = simTime();
@@ -276,7 +277,7 @@ bool PingApp2::isEnabled()
 
 void PingApp2::processPingResponse(PingPayload *msg)
 {
-    EV<<"this is 6";
+    EV<<"this is 6"; // elhanes : for debugging..
     if (msg->getOriginatorId() != pid) {
         EV_WARN << "Received response was not sent by this application, dropping packet\n";
         delete msg;
@@ -385,7 +386,8 @@ std::vector<L3Address> PingApp2::getAllAddresses()
 }
 
 void PingApp2::finish()
-{EV<<"this is 7";
+{	
+	EV<<"this is 7"; // elhanes : for debugging..
     if (sendSeqNo == 0) {
         if (printPing)
             EV_DETAIL << getFullPath() << ": No pings sent, skipping recording statistics and printing results.\n";
@@ -409,8 +411,6 @@ void PingApp2::finish()
              << (rttStat.getMean() * 1000.0) << "/" << (rttStat.getMax() * 1000.0) << endl;
         cout << "stddev (ms): " << (rttStat.getStddev() * 1000.0) << "   variance:" << rttStat.getVariance() << endl;
         cout << "--------------------------------------------------------" << endl;
-
-
 }
 
 void PingApp2::sendPing()
@@ -423,7 +423,9 @@ void PingApp2::sendPing()
     msg->setOriginatorId(pid);
     msg->setSeqNo(sendSeqNo);
     msg->setByteLength(packetSize + 4);
-    EV<<"this is 5";
+
+    EV<<"this is 5"; // elhanes : for debugging..
+
     // store the sending time in a circular buffer so we can compute RTT when the packet returns
     sendTimeHistory[sendSeqNo % PING_HISTORY_SIZE] = simTime();
 
@@ -441,7 +443,7 @@ void PingApp2::sendPing()
     EV_INFO << "Sending ping request #" << msg->getSeqNo() << " to lower layer.\n";
     send(msg, "pingOut");
 }
- std::pair<std::string,double> PingApp2:: getpinginfo()
+ std::pair<std::string,double> PingApp2:: getpinginfo() // elhanes : new function compare with PingApp.cc
 {
      std::string temp;
      temp=par("destAddr").stdstringValue();
@@ -449,6 +451,8 @@ void PingApp2::sendPing()
      pinginfo=std::make_pair(temp,rttStat.getMin()*1000.0); // the unit of rttStat.getMin()*1000.0 =ms;
      EV<<"This is inside ping info"<<pinginfo.first<<"   "<<pinginfo.second<<endl;
      return pinginfo;
+
+	 // elhanes : this function is for get ping information.. using in new eNodeBset code.. I will check this function.
 }
 
 } // namespace inet
